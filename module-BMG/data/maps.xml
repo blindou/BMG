@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Database>
+    <Types>
+        <Replace Type="MAPSIZE_STANDARD_SIX_BMG" Kind="KIND_MAPSIZE"/>
+        <Replace Type="MAPSIZE_STANDARD_EIGHT_BMG" Kind="KIND_MAPSIZE"/>
+
+    </Types>
+    <Maps>
+        <Replace MapSizeType="MAPSIZE_STANDARD_SIX_BMG" Name="LOC_MAPSIZE_STANDARD_SIX_BMG_NAME" Description="LOC_MAPSIZE_STANDARD_SIX_BMG_DESCRIPTION" DefaultPlayers="6" PlayersLandmass1="6" PlayersLandmass2="0" GridWidth="84" GridHeight="54" NumNaturalWonders="6" OceanWidth="4" LakeSizeCutoff="16" LakeGenerationFrequency="25" Continents="4" StartSectorRows="5" StartSectorCols="5"/>
+        <Replace MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG" Name="LOC_MAPSIZE_STANDARD_EIGHT_BMG_NAME" Description="LOC_MAPSIZE_STANDARD_EIGHT_BMG_DESCRIPTION" DefaultPlayers="8" PlayersLandmass1="8" PlayersLandmass2="0" GridWidth="84" GridHeight="54" NumNaturalWonders="7" OceanWidth="4" LakeSizeCutoff="16" LakeGenerationFrequency="25" Continents="4" StartSectorRows="5" StartSectorCols="5"/>
+
+    </Maps>
+    <AgeProgressionEvents>
+        <!-- Reduce age progression per player full kill -->
+        <Replace AgeProgressionEventType="AGE_PROGRESSION_TURN_COUNTER" Points="1" AgeType="AGE_ANTIQUITY" MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG"/>
+        <Replace AgeProgressionEventType="AGE_PROGRESSION_PLAYER_ELIMINATED" Points="5" AgeType="AGE_ANTIQUITY" MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG"/>
+        <Replace AgeProgressionEventType="AGE_PROGRESSION_TURN_COUNTER" Points="1" AgeType="AGE_EXPLORATION" MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG"/>
+        <Replace AgeProgressionEventType="AGE_PROGRESSION_PLAYER_ELIMINATED" Points="5" AgeType="AGE_EXPLORATION" MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG"/>
+        <Replace AgeProgressionEventType="AGE_PROGRESSION_TURN_COUNTER" Points="1" AgeType="AGE_MODERN" MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG"/>
+        <Replace AgeProgressionEventType="AGE_PROGRESSION_PLAYER_ELIMINATED" Points="5" AgeType="AGE_MODERN" MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG"/>
+
+        <Replace AgeProgressionEventType="AGE_PROGRESSION_TURN_COUNTER" Points="1" AgeType="AGE_ANTIQUITY" MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG"/>
+        <Replace AgeProgressionEventType="AGE_PROGRESSION_PLAYER_ELIMINATED" Points="5" AgeType="AGE_ANTIQUITY" MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG"/>
+        <Replace AgeProgressionEventType="AGE_PROGRESSION_TURN_COUNTER" Points="1" AgeType="AGE_EXPLORATION" MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG"/>
+        <Replace AgeProgressionEventType="AGE_PROGRESSION_PLAYER_ELIMINATED" Points="5" AgeType="AGE_EXPLORATION" MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG"/>
+        <Replace AgeProgressionEventType="AGE_PROGRESSION_TURN_COUNTER" Points="1" AgeType="AGE_MODERN" MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG"/>
+        <Replace AgeProgressionEventType="AGE_PROGRESSION_PLAYER_ELIMINATED" Points="5" AgeType="AGE_MODERN" MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG"/>
+
+    </AgeProgressionEvents>
+</Database>

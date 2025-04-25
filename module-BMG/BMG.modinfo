@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Mod id="bmg-mode" version="1.0.0"
+	xmlns="ModInfo">
+	<Properties>
+		<Name>LOC_MODULE_BMG_NAME</Name>
+		<Description>LOC_MODULE_BMG_DESCRIPTION</Description>
+		<Authors>blind</Authors>
+		<ShowInBrowser>1</ShowInBrowser>
+		<Package>MOD</Package>
+	</Properties>
+	<Dependencies>
+		<Mod id="core" title="LOC_MODULE_CORE_NAME"/>
+		<Mod id="base-standard" title="LOC_MODULE_BASE_STANDARD_NAME" />
+	</Dependencies>
+	<ActionCriteria>
+		<Criteria id="always">
+			<AlwaysMet></AlwaysMet>
+		</Criteria>
+	</ActionCriteria>
+	<ActionGroups>
+		<ActionGroup id="base-game-main-bmg" scope="game" criteria="always">
+			<Actions>
+				<UpdateDatabase>
+					<Item>data/maps.xml</Item>
+				</UpdateDatabase>
+				<UpdateText>
+					<Item>text/en_us/MapText.xml</Item>
+				</UpdateText>
+				<ImportFiles>
+					<Item>maps/resource-generator-pangea-bmg.js</Item>
+					<Item>maps/assign-starting-plots-bmg.js</Item>
+				</ImportFiles>
+			</Actions>
+			<Properties>
+				<LoadOrder>11</LoadOrder>
+			</Properties>
+		</ActionGroup>
+		<ActionGroup id="shell-bmg" scope="shell" criteria="always">
+			<Actions>
+				<UpdateDatabase>
+					<Item>config/config.xml</Item>
+					<Item>config/SetupParameters.xml</Item>
+				</UpdateDatabase>
+				<UpdateText>
+					<Item>text/en_us/MapText.xml</Item>
+				</UpdateText>
+				
+			</Actions>
+			<Properties>
+				<LoadOrder>12</LoadOrder>
+			</Properties>
+
+		</ActionGroup>
+	</ActionGroups>
+	<LocalizedText>
+		<File>text/en_us/ModuleText.xml</File>
+	</LocalizedText>
+</Mod>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Database>
+    <EnglishText>
+        <Row Tag="LOC_MAPSIZE_STANDARD_EIGHT_BMG_NAME">
+            <Text>Standard Eight BMG</Text>
+        </Row>
+        <Row Tag="LOC_MAPSIZE_STANDARD_SIX_BMG_NAME">
+            <Text>Standard Six BMG</Text>
+        </Row>
+        <Row Tag="LOC_MAP_CONTINENTS_BMG_NAME">
+            <Text>Continents-BMG</Text>
+        </Row>
+    </EnglishText>
+</Database>

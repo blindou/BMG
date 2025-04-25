@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Database>
+    <EnglishText>
+        <Row Tag="LOC_MODULE_BMG_NAME">
+            <Text>BMG - Balanced Map Generation</Text>
+        </Row>
+        <Row Tag="LOC_MODULE_BMG_DESCRIPTION">
+            <Text>Module for balanced map generation for 6 / 8 players</Text>
+        </Row>
+    </EnglishText>
+</Database>
