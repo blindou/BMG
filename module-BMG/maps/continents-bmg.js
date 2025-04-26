@@ -43,7 +43,7 @@ function generateMap() {
     // Establish continent boundaries
     let iOceanWaterColumns = globals.g_OceanWaterColumns;
     // juste après avoir récupéré iWidth et iOceanWaterColumns
-    const firstContinentFraction = 0.65;      // 60% pour l’ouest, 40% pour l’est
+    const firstContinentFraction = 0.6;       // 60% pour l'ouest, 40% pour l'est
     const margin          = iOceanWaterColumns / 2;
     const dividerColumn   = Math.floor(iWidth * firstContinentFraction);
 
@@ -98,8 +98,8 @@ function generateMap() {
 
     // ─── 1) Ajout de patches tropicaux ─────────────────────
     console.log("Ajout de patches tropicaux…");
-    const numTropicalPatches = 10;   // nombre de “center points”
-    const patchRadius        = 2;    // rayon autour de chaque point
+    const numTropicalPatches = 3;   // nombre de "center points"
+    const patchRadius        = 3;    // rayon autour de chaque point
     for (let i = 0; i < numTropicalPatches; i++) {
         const x = TerrainBuilder.getRandomNumber(iWidth,  "TropPatchX");
         const y = TerrainBuilder.getRandomNumber(iHeight, "TropPatchY");
@@ -163,109 +163,94 @@ function generateMap() {
     // ───────────────────────────────────────────────────────
 
     const horseIdx = GameInfo.Resources.lookup("RESOURCE_HORSES").$index;
-    // À placer juste après avoir récupéré startPositions
+    const ironIdx = GameInfo.Resources.lookup("RESOURCE_IRON")?.$index ?? -1;
     startPositions.forEach(plotIndex => {
         if (plotIndex == null) return;
         const { x: x0, y: y0 } = GameplayMap.getLocationFromIndex(plotIndex);
-        let hasHores = false;
-        let plots3 = GameplayMap.getPlotIndicesInRadius(x0, y0, 3);
 
-        plots3 = plots3.filter(idx => idx !== plotIndex);
-
-        utilities.shuffle(plots3)
-
-        if (plots3.some(idx => {
+        // 1) Placement de Horses et Iron dans l'anneau de distance ]3;6]
+        const plots6 = GameplayMap.getPlotIndicesInRadius(x0, y0, 6).filter(idx => idx !== plotIndex);
+        utilities.shuffle(plots6);
+        const hasHorse = plots6.some(idx => {
             const p = GameplayMap.getLocationFromIndex(idx);
             return GameplayMap.getResourceType(p.x, p.y) === horseIdx;
-        })) {
-            hasHores = true;
-        }
-
-        if (!hasHores) {
-            const candidates = plots3.filter(idx => {
+        });
+        const hasIron = ironIdx >= 0 && plots6.some(idx => {
+            const p = GameplayMap.getLocationFromIndex(idx);
+            return GameplayMap.getResourceType(p.x, p.y) === ironIdx;
+        });
+        const ring = plots6.filter(idx => {
+            const p = GameplayMap.getLocationFromIndex(idx);
+            const d = GameplayMap.getPlotDistance(x0, y0, p.x, p.y);
+            return d > 3 && d <= 6;
+        });
+        if (!hasHorse) {
+            const horseCands = ring.filter(idx => {
                 const p = GameplayMap.getLocationFromIndex(idx);
-                console.log(ResourceBuilder.canHaveResource(p.x, p.y, horseIdx));
                 return ResourceBuilder.canHaveResource(p.x, p.y, horseIdx);
             });
-
-            if (candidates.length > 0) {
-                // on place sur la première candidate
-                const chosenIdx = candidates[0];
-                const p = GameplayMap.getLocationFromIndex(chosenIdx);
+            if (horseCands.length > 0) {
+                const p = GameplayMap.getLocationFromIndex(horseCands[0]);
                 ResourceBuilder.setResourceType(p.x, p.y, horseIdx);
-                console.log(`🐴 Placé Horses pour joueur à (${p.x},${p.y})`);
-            } else {
-                // fallback : on force la première case du rayon à devenir valide
-                const fallbackIdx = plots3[0];
-                const pf = GameplayMap.getLocationFromIndex(fallbackIdx);
-
-                // 1) Transformer si c’est de l’eau en terrain de plaine
-                if (GameplayMap.isWater(pf.x, pf.y)) {
-                    TerrainBuilder.setTerrainType(pf.x, pf.y, globals.g_PlainTerrain);
-                }
-
-                // 2) Supprimer toute feature (falaise, forêt…)
-                TerrainBuilder.setFeatureType(pf.x, pf.y, {
-                    Feature: FeatureTypes.NO_FEATURE,
-                    Direction: -1,
-                    Elevation: 0
-                });
-
-                // 3) (Optionnel) Vider toute ressource existante
-                ResourceBuilder.setResourceType(pf.x, pf.y, ResourceTypes.NO_RESOURCE);
-
-                // 4) Maintenant qu’on a un terrain valide, on place Horses
-                ResourceBuilder.setResourceType(pf.x, pf.y, horseIdx);
-                console.log(`⚡ Fallback : forcé terrain et placé Horses pour joueur à (${pf.x},${pf.y})`);
+                console.log(`🐴 Placé Horses à (${p.x},${p.y})`);
             }
-
+        }
+        if (ironIdx >= 0 && !hasIron) {
+            const ironCands = ring.filter(idx => {
+                const p = GameplayMap.getLocationFromIndex(idx);
+                return ResourceBuilder.canHaveResource(p.x, p.y, ironIdx);
+            });
+            if (ironCands.length > 0) {
+                const p = GameplayMap.getLocationFromIndex(ironCands[0]);
+                ResourceBuilder.setResourceType(p.x, p.y, ironIdx);
+                console.log(`⛓️ Placé Iron à (${p.x},${p.y})`);
+            }
         }
 
-        // --- 2) Vérifier proportion de collines (hill terrain) dans le rayon 3 ---
-        const hillTerrain = globals.g_HillTerrain;
-
-        let hillCount = 0;
+        // 2) Vérifier proportion de collines et forêts dans le rayon 3
+        const hillTerrain   = globals.g_HillTerrain;
+        const forestFeature = GameInfo.Features.find(f => f.FeatureType === "FEATURE_FOREST").$index; // index de la forêt
+        let goodCount = 0;
+        const plots3 = GameplayMap.getPlotIndicesInRadius(x0, y0, 3).filter(idx => idx !== plotIndex);
         plots3.forEach(idx => {
             const { x, y } = GameplayMap.getLocationFromIndex(idx);
-            if (GameplayMap.getTerrainType(x,y) === hillTerrain) hillCount++;
+            if (GameplayMap.getTerrainType(x, y) === hillTerrain ||
+                GameplayMap.getFeatureType(x, y) === forestFeature) {
+                goodCount++;
+            }
         });
         const needRatio = 0.30;  // 30%
-        if (hillCount / plots3.length < needRatio) {
-            // on convertit quelques cases plates en collines
-            const toAdd = Math.ceil(needRatio * plots3.length) - hillCount;
+        if (goodCount / plots3.length < needRatio) {
+            const toAdd = Math.ceil(needRatio * plots3.length) - goodCount;
             let added = 0;
             for (let idx of utilities.shuffle(plots3)) {
                 if (added >= toAdd) break;
                 const { x, y } = GameplayMap.getLocationFromIndex(idx);
-                if (GameplayMap.getTerrainType(x,y) === globals.g_FlatTerrain) {
-                    TerrainBuilder.setTerrainType(x,y, hillTerrain);
+                if (GameplayMap.getTerrainType(x, y) === globals.g_FlatTerrain) {
+                    TerrainBuilder.setTerrainType(x, y, hillTerrain);
                     added++;
                 }
             }
             console.log(`⛰️ Ajout de ${added} collines autour de (${x0},${y0})`);
         }
 
-        // --- 3) Forcer la case de la capitale à “fertile” (valeur 3) ---
-        // (ici on considère qu’on peut obtenir la "fertilité" via une méthode fictive getFertility)
+        // 3) Forcer la case de la capitale à "fertile" (valeur 3)
         if (typeof GameplayMap.getFertility === "function") {
             const fert = GameplayMap.getFertility(x0, y0);
             if (fert < 3) {
-                // on remplace la case par une plaine fertilisée, par exemple :
                 TerrainBuilder.setTerrainType(x0, y0, globals.g_PlainTerrain);
-                // et/ou on ajoute un bonus ressource “grain” si disponible :
                 const grainIdx = GameInfo.Resources.lookup("RESOURCE_WHEAT")?.$index;
                 if (grainIdx != null) ResourceBuilder.setResourceType(x0, y0, grainIdx);
                 console.log(`🌾 Case de spawn (${x0},${y0}) re-fertilée`);
             }
         }
 
-        // --- 4) Nettoyer volcans / montagnes autour (rayon 1) ---
-        TerrainBuilder.validateAndFixTerrain(); // s’assurer d’un état cohérent avant
-        const plots = GameplayMap.getPlotIndicesInRadius(x0, y0, 1);
-        plots.forEach(idx => {
+        // 4) Nettoyer volcans / montagnes autour (rayon 1)
+        TerrainBuilder.validateAndFixTerrain();
+        const plotsNear = GameplayMap.getPlotIndicesInRadius(x0, y0, 1);
+        plotsNear.forEach(idx => {
             const { x, y } = GameplayMap.getLocationFromIndex(idx);
-            if (GameplayMap.isMountain(x, y) || GameplayMap.getFeatureType(x,y) === FeatureTypes.VOLCANO) {
-                // on remet en “plat”
+            if (GameplayMap.isMountain(x, y) || GameplayMap.getFeatureType(x, y) === FeatureTypes.VOLCANO) {
                 TerrainBuilder.setTerrainType(x, y, globals.g_FlatTerrain);
                 TerrainBuilder.setFeatureType(x, y, {
                     Feature: FeatureTypes.NO_FEATURE,

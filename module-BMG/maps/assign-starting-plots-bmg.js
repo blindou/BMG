@@ -164,16 +164,9 @@ export function assignStartPositions(iNumWest, iNumEast, west, east, iStartSecto
     let homelandStartRegions = [];
     let distantStartRegions = [];
     //===========================================================================
-    // Setting to determine which start position algorithm to use
-    //     Is TRUE if using the Civ VII sector-based approach
-    //     Is FALSE if using the Civ VI method (areas of equal fertility)
-    let bAssignStartPositionsBySector = true;
-    if (iStartSectorRows == 0 || iStartSectorCols == 0) {
-        bAssignStartPositionsBySector = false;
-    }
-    else {
-        bAssignStartPositionsBySector = checkStartSectorsViable(west, east, iStartSectorRows, iStartSectorCols, sectors);
-    }
+    // Forcer la méthode fertility-based (désactiver sector-based)
+    let bAssignStartPositionsBySector = false;
+    //===========================================================================
     //
     // NEW CIV VII METHOD
     //
@@ -568,12 +561,20 @@ function pickStartPlot(region, numFoundEarlier, playerId, ignoreBias, startPosit
     let highestScore = 0;
     for (let iY = region.south; iY <= region.north; iY++) {
         for (let iX = region.west; iX <= region.east; iX++) {
+            // Ignorer case si plus de 2 voisins en eau ou un voisin montagne
+            const adj = GameplayMap.getPlotIndicesInRadius(iX, iY, 1);
+            let waterCount = 0, hasMountain = false;
+            adj.forEach(idx => {
+                const { x, y } = GameplayMap.getLocationFromIndex(idx);
+                if (GameplayMap.isWater(x, y)) waterCount++;
+                if (GameplayMap.isMountain(x, y)) hasMountain = true;
+            });
+            if (waterCount > 2 || hasMountain) continue;
+
             let score = scorePlot(iX, iY, region.continent);
             if (score > 0 && !ignoreBias) {
                 score += adjustScoreByStartBias(iX, iY, playerId);
-                console.log('Player : ' + playerId + "have score bias :" + adjustScoreByStartBias(iX, iY, playerId))
                 if (numFoundEarlier > 0) {
-                    console.log('Player : ' + playerId + "have score bias :")
                     score = adjustScoreByClosestStart(score, iX, iY, startPositions);
                 }
             }
@@ -583,7 +584,7 @@ function pickStartPlot(region, numFoundEarlier, playerId, ignoreBias, startPosit
             }
         }
     }
-    console.log("Final score high =" + highestScore + "for player - " + playerId);
+    console.log("Final score high =" + highestScore + " for player - " + playerId);
     return chosenPlotIndex;
 }
 function scorePlot(iX, iY, iContinent) {
