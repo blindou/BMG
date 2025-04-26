@@ -1,14 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Database>
     <EnglishText>
-        <Row Tag="LOC_MAPSIZE_STANDARD_EIGHT_BMG_NAME">
-            <Text>Standard Eight BMG</Text>
+        <Row Tag="LOC_MAPSIZE_STANDARD_FOUR_BMG_NAME">
+            <Text>Standard Four BMG</Text>
+        </Row>
+        <Row Tag="LOC_MAPSIZE_STANDARD_FOUR_BMG_DESCRIPTION">
+            <Text>Balanced map generation for four players</Text>
         </Row>
         <Row Tag="LOC_MAPSIZE_STANDARD_SIX_BMG_NAME">
             <Text>Standard Six BMG</Text>
         </Row>
+        <Row Tag="LOC_MAPSIZE_STANDARD_SIX_BMG_DESCRIPTION">
+            <Text>Balanced map generation for six players</Text>
+        </Row>
+        <Row Tag="LOC_MAPSIZE_STANDARD_EIGHT_BMG_NAME">
+            <Text>Standard Eight BMG</Text>
+        </Row>
+        <Row Tag="LOC_MAPSIZE_STANDARD_EIGHT_BMG_DESCRIPTION">
+            <Text>Balanced map generation for eight players</Text>
+        </Row>
         <Row Tag="LOC_MAP_CONTINENTS_BMG_NAME">
             <Text>Continents-BMG</Text>
+        </Row>
+        <Row Tag="LOC_MAP_CONTINENTS_BMG_DESCRIPTION">
+            <Text>Continents style map for Balanced Map Generation</Text>
         </Row>
     </EnglishText>
 </Database>

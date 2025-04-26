@@ -294,7 +294,86 @@ export function assignStartPositions(iNumWest, iNumEast, west, east, iStartSecto
     console.log("homelandStartRegions: " + homelandStartRegions.length);
     console.log("distantPlayers: " + distantPlayers.length);
     console.log("distantStartRegions: " + distantStartRegions.length);
-    // Slide players around based on Start Biases
+    // --- Bias 100% déterministe en fonction des tables StartBias ---
+    function getStaticBias(playerId) {
+        const player = Players.get(playerId);
+        const civHash = player.civilizationType;
+        const ldrHash = player.leaderType;
+        let total = 0;
+        // Biomes
+        GameInfo.StartBiasBiomes.forEach(def => {
+            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
+            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
+            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
+                total += def.Score;
+            }
+        });
+        // Terrains
+        GameInfo.StartBiasTerrains.forEach(def => {
+            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
+            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
+            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
+                total += def.Score;
+            }
+        });
+        // Rivers
+        GameInfo.StartBiasRivers.forEach(def => {
+            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
+            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
+            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
+                total += def.Score;
+            }
+        });
+        // Coasts
+        GameInfo.StartBiasAdjacentToCoasts.forEach(def => {
+            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
+            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
+            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
+                total += def.Score;
+            }
+        });
+        // Features
+        GameInfo.StartBiasFeatureClasses.forEach(def => {
+            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
+            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
+            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
+                total += def.Score;
+            }
+        });
+        // Resources
+        GameInfo.StartBiasResources.forEach(def => {
+            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
+            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
+            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
+                total += def.Score;
+            }
+        });
+        // Lakes
+        GameInfo.StartBiasLakes.forEach(def => {
+            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
+            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
+            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
+                total += def.Score;
+            }
+        });
+        // Natural Wonders
+        GameInfo.StartBiasNaturalWonders.forEach(def => {
+            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
+            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
+            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
+                total += def.Score;
+            }
+        });
+        return total;
+    }
+
+    // Tri statique des joueurs homeland
+    homelandPlayers.sort((a,b) => getStaticBias(aliveMajorIds[b]) - getStaticBias(aliveMajorIds[a]));
+    console.log("HomelandPlayers triés statiquement par bias:", homelandPlayers.map(i=>Players.get(aliveMajorIds[i]).leaderName + ':' + getStaticBias(aliveMajorIds[i]).toFixed(1)));
+
+    // Tri statique des joueurs distant
+    distantPlayers.sort((a,b) => getStaticBias(aliveMajorIds[b]) - getStaticBias(aliveMajorIds[a]));
+    console.log("DistantPlayers triés statiquement par bias:", distantPlayers.map(i=>Players.get(aliveMajorIds[i]).leaderName + ':' + getStaticBias(aliveMajorIds[i]).toFixed(1)));
     console.log("Update homelandPlayers:");
     updateRegionsForStartBias(homelandPlayers, homelandStartRegions);
     console.log("Update distantPlayers:");
@@ -570,6 +649,19 @@ function pickStartPlot(region, numFoundEarlier, playerId, ignoreBias, startPosit
                 if (GameplayMap.isMountain(x, y)) hasMountain = true;
             });
             if (waterCount > 2 || hasMountain) continue;
+
+            // 2ème couronne (distance=2) : compte eaux et montagnes
+            const adj2 = GameplayMap.getPlotIndicesInRadius(iX, iY, 2).filter(idx => {
+                const loc = GameplayMap.getLocationFromIndex(idx);
+                return GameplayMap.getPlotDistance(iX, iY, loc.x, loc.y) === 2;
+            });
+            let waterCount2 = 0, mountainCount2 = 0;
+            adj2.forEach(idx => {
+                const { x, y } = GameplayMap.getLocationFromIndex(idx);
+                if (GameplayMap.isWater(x, y)) waterCount2++;
+                if (GameplayMap.isMountain(x, y)) mountainCount2++;
+            });
+            if (waterCount2 > 3 || mountainCount2 > 2) continue;
 
             let score = scorePlot(iX, iY, region.continent);
             if (score > 0 && !ignoreBias) {

@@ -10,6 +10,9 @@
         <Row Domain="StandardMapSizes" MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG" Name="LOC_MAPSIZE_STANDARD_EIGHT_BMG_NAME" Description="LOC_MAPSIZE_STANDARD_EIGHT_BMG_DESCRIPTION" MinPlayers="2" MaxPlayers="8" MaxHumans="8" DefaultPlayers="8" SortIndex="53"/>
         <Row Domain="DistantLandsMapSizes" MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG" Name="LOC_MAPSIZE_STANDARD_EIGHT_BMG_NAME" Description="LOC_MAPSIZE_STANDARD_EIGHT_BMG_DESCRIPTION" MinPlayers="2" MaxPlayers="8" MaxHumans="8" DefaultPlayers="8" SortIndex="54"/>
 
+        <Row Domain="StandardMapSizes" MapSizeType="MAPSIZE_STANDARD_FOUR_BMG" Name="LOC_MAPSIZE_STANDARD_FOUR_BMG_NAME" Description="LOC_MAPSIZE_STANDARD_FOUR_BMG_DESCRIPTION" MinPlayers="2" MaxPlayers="4" MaxHumans="4" DefaultPlayers="4" SortIndex="53"/>
+        <Row Domain="DistantLandsMapSizes" MapSizeType="MAPSIZE_STANDARD_FOUR_BMG" Name="LOC_MAPSIZE_STANDARD_FOUR_BMG_NAME" Description="LOC_MAPSIZE_STANDARD_FOUR_BMG_DESCRIPTION" MinPlayers="2" MaxPlayers="4" MaxHumans="4" DefaultPlayers="4" SortIndex="54"/>
+
     </MapSizes>
 
 </Database>

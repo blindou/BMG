@@ -40,10 +40,11 @@ function generateMap() {
     let iTilesPerLake = mapInfo.LakeGenerationFrequency;
     let iNumPlayers1 = mapInfo.PlayersLandmass1;
     let iNumPlayers2 = mapInfo.PlayersLandmass2;
-    // Establish continent boundaries
-    let iOceanWaterColumns = globals.g_OceanWaterColumns;
+    // Récupérer l'épaisseur d'océan depuis les données de la map ou la valeur globale par défaut
+    let iOceanWaterColumns = (mapInfo.OceanWidth != null) ? mapInfo.OceanWidth : globals.g_OceanWaterColumns;
+    console.log(`🌊 OceanWidth parameter utilisé: ${iOceanWaterColumns}`);
     // juste après avoir récupéré iWidth et iOceanWaterColumns
-    const firstContinentFraction = 0.6;       // 60% pour l'ouest, 40% pour l'est
+    const firstContinentFraction = 0.55;       // 55% pour l'ouest, 45% pour l'est
     const margin          = iOceanWaterColumns / 2;
     const dividerColumn   = Math.floor(iWidth * firstContinentFraction);
 
