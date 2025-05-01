@@ -1,4 +1,9 @@
-console.log("Generating using script continents-eight-mjpcount.js");
+// Continents.ts
+/**
+ * Base game map script - Produces widely varied continents.
+ * @packageDocumentation
+ */
+console.log("Generating using script Continents.ts");
 import { assignStartPositions, chooseStartSectors } from '/bmg-mode/maps/assign-starting-plots-bmg.js';
 import { addMountains, addHills, expandCoasts, buildRainfallMap, generateLakes } from '/base-standard/maps/elevation-terrain-generator.js';
 import { addFeatures, designateBiomes } from '/base-standard/maps/feature-biome-generator.js';
@@ -11,7 +16,6 @@ import { assignAdvancedStartRegions } from '/base-standard/maps/assign-advanced-
 import { generateDiscoveries } from '/base-standard/maps/discovery-generator.js';
 import { generateSnow, dumpPermanentSnow } from '/base-standard/maps/snow-generator.js';
 import { dumpStartSectors, dumpContinents, dumpTerrain, dumpElevation, dumpRainfall, dumpBiomes, dumpFeatures, dumpResources, dumpNoisePredicate } from '/base-standard/maps/map-debug-helpers.js';
-
 function requestMapData(initParams) {
     console.log(initParams.width);
     console.log(initParams.height);
@@ -22,63 +26,89 @@ function requestMapData(initParams) {
     console.log(initParams.mapSize);
     engine.call("SetMapInitData", initParams);
 }
-
 function generateMap() {
-
     console.log("Generating a map!");
     console.log(`Age - ${GameInfo.Ages.lookup(Game.age).AgeType}`);
     let iWidth = GameplayMap.getGridWidth();
     let iHeight = GameplayMap.getGridHeight();
-
     let uiMapSize = GameplayMap.getMapSize();
     let startPositions = [];
     let mapInfo = GameInfo.Maps.lookup(uiMapSize);
     if (mapInfo == null)
         return;
     let iNumNaturalWonders = mapInfo.NumNaturalWonders;
-
     let iTilesPerLake = mapInfo.LakeGenerationFrequency;
     let iNumPlayers1 = mapInfo.PlayersLandmass1;
     let iNumPlayers2 = mapInfo.PlayersLandmass2;
-    // Récupérer l'épaisseur d'océan depuis les données de la map ou la valeur globale par défaut
-    let iOceanWaterColumns = (mapInfo.OceanWidth != null) ? mapInfo.OceanWidth : globals.g_OceanWaterColumns;
-    console.log(`🌊 OceanWidth parameter utilisé: ${iOceanWaterColumns}`);
-    // juste après avoir récupéré iWidth et iOceanWaterColumns
-    const firstContinentFraction = 0.55;       // 55% pour l'ouest, 45% pour l'est
-    const margin          = iOceanWaterColumns / 2;
-    const dividerColumn   = Math.floor(iWidth * firstContinentFraction);
-
-// nouveau westContinent
+    // Establish continent boundaries
+    let iOceanWaterColumns = globals.g_OceanWaterColumns;
     let westContinent = {
-        west:   margin,
-        east:   dividerColumn - margin,
-        south:  globals.g_PolarWaterRows,
-        north:  iHeight - globals.g_PolarWaterRows,
+        west: iOceanWaterColumns / 2,
+        east: (iWidth / 2) - (iOceanWaterColumns / 2),
+        south: globals.g_PolarWaterRows,
+        north: iHeight - globals.g_PolarWaterRows,
         continent: 0
     };
-
-// nouveau eastContinent
     let eastContinent = {
-        west:   dividerColumn + margin,
-        east:   iWidth - margin,
-        south:  globals.g_PolarWaterRows,
-        north:  iHeight - globals.g_PolarWaterRows,
-        continent: 1
+        west: (iWidth / 2) + (iOceanWaterColumns / 2),
+        east: iWidth - (iOceanWaterColumns / 2),
+        south: globals.g_PolarWaterRows,
+        north: iHeight - globals.g_PolarWaterRows,
+        continent: 0
     };
     let startSectors = [];
     let iStartSectorRows = 0;
     let iStartSectorCols = 0;
-
-    let bHumanNearEquator = utilities.needHumanNearEquator();
-    iStartSectorRows = mapInfo.StartSectorRows;
-    iStartSectorCols = mapInfo.StartSectorCols;
-    startSectors = chooseStartSectors(iNumPlayers1, iNumPlayers2, iStartSectorRows, iStartSectorCols, bHumanNearEquator);
-    dumpStartSectors(startSectors);
-    createLandmasses(iWidth, iHeight, westContinent, eastContinent, iStartSectorRows, iStartSectorCols, startSectors);
-    utilities.applyCoastalErosion(westContinent, .02, 1.5, .8, false);
-    utilities.applyCoastalErosion(eastContinent, .02, 1.5, .8, false);
-    utilities.addPlotTags(iHeight, iWidth, eastContinent.west);
-
+    let startPosition = Configuration.getMapValue("StartPosition");
+    if (startPosition == null) {
+        startPosition = Database.makeHash('START_POSITION_STANDARD');
+    }
+    startPosition = Number(BigInt.asIntN(32, BigInt(startPosition))); // Convert to signed int32.
+    let startPositionHash = Database.makeHash("START_POSITION_BALANCED");
+    let bIsBalanced = (startPosition == startPositionHash);
+    if (bIsBalanced) {
+        console.log("Balanced Map");
+        let iRandom = TerrainBuilder.getRandomNumber(2, "East or West");
+        if (iRandom == 1) {
+            let iNum1 = iNumPlayers1;
+            let iNum2 = iNumPlayers2;
+            iNumPlayers1 = iNum2;
+            iNumPlayers2 = iNum1;
+        }
+        let bHumanNearEquator = utilities.needHumanNearEquator();
+        iStartSectorRows = mapInfo.StartSectorRows;
+        iStartSectorCols = mapInfo.StartSectorCols;
+        startSectors = chooseStartSectors(iNumPlayers1, iNumPlayers2, iStartSectorRows, iStartSectorCols, bHumanNearEquator);
+        dumpStartSectors(startSectors);
+        createLandmasses(iWidth, iHeight, westContinent, eastContinent, iStartSectorRows, iStartSectorCols, startSectors);
+        utilities.applyCoastalErosionAdjustingForStartSectors(westContinent, eastContinent, .02, 1.5, .8, iStartSectorRows, iStartSectorCols, startSectors);
+        utilities.applyCoastalErosionAdjustingForStartSectors(eastContinent, eastContinent, .02, 1.5, .8, iStartSectorRows, iStartSectorCols, startSectors);
+        utilities.addPlotTags(iHeight, iWidth, eastContinent.west);
+    }
+    else {
+        console.log("Standard Map");
+        let iFractalGrain = 2;
+        let iWaterPercent = globals.g_WaterPercent * globals.g_Cutoff;
+        let iLargestContinentPercent = 18;
+        utilities.createOrganicLandmasses(iWidth, iHeight, westContinent, eastContinent, iFractalGrain, iWaterPercent, iLargestContinentPercent);
+        utilities.addPlotTags(iHeight, iWidth, eastContinent.west);
+        utilities.applyCoastalErosion(westContinent, .02, 1.5, .8, false);
+        utilities.applyCoastalErosion(eastContinent, .02, 1.5, .8, false);
+        // Is biggest area in west or east?
+        let iAreaID = AreaBuilder.findBiggestArea(false);
+        let kBoundaries = AreaBuilder.getAreaBoundary(iAreaID);
+        console.log("BIGGEST AREA");
+        console.log("  West: " + kBoundaries.west);
+        console.log("  East: " + kBoundaries.east);
+        console.log("  South: " + kBoundaries.south);
+        console.log("  North: " + kBoundaries.north);
+        if (kBoundaries.west > (iWidth / 2)) {
+            let iNum1 = iNumPlayers1;
+            let iNum2 = iNumPlayers2;
+            iNumPlayers1 = iNum2;
+            iNumPlayers2 = iNum1;
+        }
+    }
     TerrainBuilder.validateAndFixTerrain();
     expandCoasts(iWidth, iHeight);
     utilities.adjustOceanPlotTags(iNumPlayers1 > iNumPlayers2);
@@ -96,28 +126,6 @@ function generateMap() {
     TerrainBuilder.defineNamedRivers();
     designateBiomes(iWidth, iHeight);
     addNaturalWonders(iWidth, iHeight, iNumNaturalWonders);
-
-    // ─── 1) Ajout de patches tropicaux ─────────────────────
-    console.log("Ajout de patches tropicaux…");
-    const numTropicalPatches = 3;   // nombre de "center points"
-    const patchRadius        = 3;    // rayon autour de chaque point
-    for (let i = 0; i < numTropicalPatches; i++) {
-        const x = TerrainBuilder.getRandomNumber(iWidth,  "TropPatchX");
-        const y = TerrainBuilder.getRandomNumber(iHeight, "TropPatchY");
-        for (let dy = -patchRadius; dy <= patchRadius; dy++) {
-            for (let dx = -patchRadius; dx <= patchRadius; dx++) {
-                const nx = x + dx, ny = y + dy;
-                if (
-                    nx >= 0 && nx < iWidth &&
-                    ny >= 0 && ny < iHeight &&
-                    !GameplayMap.isWater(nx, ny)
-                ) {
-                    TerrainBuilder.setBiomeType(nx, ny, globals.g_TropicalBiome);
-                }
-            }
-        }
-    }
-
     TerrainBuilder.addFloodplains(4, 10);
     addFeatures(iWidth, iHeight);
     TerrainBuilder.validateAndFixTerrain();
@@ -134,40 +142,11 @@ function generateMap() {
     generateResources(iWidth, iHeight, westContinent, eastContinent, iNumPlayers1, iNumPlayers2);
     startPositions = assignStartPositions(iNumPlayers1, iNumPlayers2, westContinent, eastContinent, iStartSectorRows, iStartSectorCols, startSectors);
 
-    // Evaluate spawns multi-criteria
-    const positions = startPositions.map(pi=>GameplayMap.getLocationFromIndex(pi));
-    const biasScores=[],resCounts=[],fertSums=[],minDists=[];
-    positions.forEach((loc,i)=>{
-        biasScores.push(StartPositioner.getStartPositionScore(loc.x,loc.y));
-        let rc=0,fs=0;
-        for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const x=loc.x+dx,y=loc.y+dy;if(x<0||y<0||x>=iWidth||y>=iHeight)continue; if(GameplayMap.getResourceType(x,y)>0&&GameInfo.Resources.lookup(GameplayMap.getResourceType(x,y)).ResourceClassType==='RESOURCECLASS_BONUS') rc++; // Fertility metric removed (getFertility not available)
-            fs += 0;}
-        resCounts.push(rc); fertSums.push(fs);
-        let md=Infinity; positions.forEach((o,j)=>{if(i!==j){const d=GameplayMap.getPlotDistance(loc.x,loc.y,o.x,o.y); if(d<md) md=d;}});
-        minDists.push(md);
-    });
-    const maxBias=Math.max(...biasScores), maxRes=Math.max(...resCounts), maxFert=Math.max(...fertSums), maxDist=Math.max(...minDists);
-    const w={bias:0.45,res:0.25,water:0.1,coast:0.1,fert:0,dist:0.1};
-    const totalScores=positions.map((loc,i)=>{
-        const hasFresh=GameplayMap.isRiver(loc.x,loc.y)||GameplayMap.isAdjacentToRivers(loc.x,loc.y,1);
-        const isCoast=GameplayMap.isCoastalLand(loc.x,loc.y);
-        const nB=maxBias?biasScores[i]/maxBias:0;
-        const nR=maxRes?resCounts[i]/maxRes:0;
-        const nF=maxFert?fertSums[i]/maxFert:0;
-        const nD=maxDist?minDists[i]/maxDist:0;
-        return w.bias*nB + w.res*nR + w.water*(hasFresh?1:0) + w.coast*(isCoast?1:0) + w.fert*nF + w.dist*nD;
-    });
-    const minTotal=Math.min(...totalScores);
-
-    console.log("Spawn Scores:",totalScores.map(s=>s.toFixed(2)));
-
-    // ───────────────────────────────────────────────────────
-
     const horseIdx = GameInfo.Resources.lookup("RESOURCE_HORSES").$index;
     const ironIdx = GameInfo.Resources.lookup("RESOURCE_IRON")?.$index ?? -1;
     startPositions.forEach(plotIndex => {
         if (plotIndex == null) return;
-        const { x: x0, y: y0 } = GameplayMap.getLocationFromIndex(plotIndex);
+        const {x: x0, y: y0} = GameplayMap.getLocationFromIndex(plotIndex);
 
         // 1) Placement de Horses et Iron dans l'anneau de distance ]3;6]
         const plots6 = GameplayMap.getPlotIndicesInRadius(x0, y0, 6).filter(idx => idx !== plotIndex);
@@ -209,65 +188,39 @@ function generateMap() {
         }
 
         // 2) Vérifier proportion de collines et forêts dans le rayon 3
-        const hillTerrain   = globals.g_HillTerrain;
+        const hillTerrain = globals.g_HillTerrain;
         const forestFeature = GameInfo.Features.find(f => f.FeatureType === "FEATURE_FOREST").$index; // index de la forêt
         let goodCount = 0;
         const plots3 = GameplayMap.getPlotIndicesInRadius(x0, y0, 3).filter(idx => idx !== plotIndex);
         plots3.forEach(idx => {
-            const { x, y } = GameplayMap.getLocationFromIndex(idx);
+            const {x, y} = GameplayMap.getLocationFromIndex(idx);
             if (GameplayMap.getTerrainType(x, y) === hillTerrain ||
                 GameplayMap.getFeatureType(x, y) === forestFeature) {
                 goodCount++;
             }
         });
-        const needRatio = 0.30;  // 30%
+        const needRatio = 0.15;  // 30%
         if (goodCount / plots3.length < needRatio) {
             const toAdd = Math.ceil(needRatio * plots3.length) - goodCount;
             let added = 0;
             for (let idx of utilities.shuffle(plots3)) {
                 if (added >= toAdd) break;
-                const { x, y } = GameplayMap.getLocationFromIndex(idx);
-                if (GameplayMap.getTerrainType(x, y) === globals.g_FlatTerrain) {
-                    TerrainBuilder.setTerrainType(x, y, hillTerrain);
+                const {x, y} = GameplayMap.getLocationFromIndex(idx);
+                // Vérifier que la case n'a pas déjà une forêt ou une colline
+                if (GameplayMap.getTerrainType(x, y) === globals.g_FlatTerrain &&
+                    GameplayMap.getFeatureType(x, y) !== forestFeature) {
+                    // 50% de chance d'ajouter une forêt ou une colline
+                    if (Math.random() < 0.5) {
+                        TerrainBuilder.setTerrainType(x, y, hillTerrain);
+                    } else {
+                        TerrainBuilder.setFeatureType(x, y, forestFeature);
+                    }
                     added++;
                 }
             }
-            console.log(`⛰️ Ajout de ${added} collines autour de (${x0},${y0})`);
+            console.log(`⛰️🌲 Ajout de ${added} collines/forêts autour de (${x0},${y0})`);
         }
-
-        // 3) Forcer la case de la capitale à "fertile" (valeur 3)
-        if (typeof GameplayMap.getFertility === "function") {
-            const fert = GameplayMap.getFertility(x0, y0);
-            if (fert < 3) {
-                TerrainBuilder.setTerrainType(x0, y0, globals.g_PlainTerrain);
-                const grainIdx = GameInfo.Resources.lookup("RESOURCE_WHEAT")?.$index;
-                if (grainIdx != null) ResourceBuilder.setResourceType(x0, y0, grainIdx);
-                console.log(`🌾 Case de spawn (${x0},${y0}) re-fertilée`);
-            }
-        }
-
-        // 4) Nettoyer volcans / montagnes autour (rayon 1)
-        TerrainBuilder.validateAndFixTerrain();
-        const plotsNear = GameplayMap.getPlotIndicesInRadius(x0, y0, 1);
-        plotsNear.forEach(idx => {
-            const { x, y } = GameplayMap.getLocationFromIndex(idx);
-            if (GameplayMap.isMountain(x, y) || GameplayMap.getFeatureType(x, y) === FeatureTypes.VOLCANO) {
-                TerrainBuilder.setTerrainType(x, y, globals.g_FlatTerrain);
-                TerrainBuilder.setFeatureType(x, y, {
-                    Feature: FeatureTypes.NO_FEATURE,
-                    Direction: -1,
-                    Elevation: 0
-                });
-                console.log(`🗻 Suppression montagne/faille en (${x},${y})`);
-            }
-        });
     });
-    TerrainBuilder.validateAndFixTerrain();
-    dumpTerrain(iWidth, iHeight);
-    dumpElevation(iWidth, iHeight);
-    dumpRainfall(iWidth, iHeight);
-    dumpBiomes(iWidth, iHeight);
-    dumpFeatures(iWidth, iHeight);
     generateDiscoveries(iWidth, iHeight, startPositions);
     dumpResources(iWidth, iHeight);
     FertilityBuilder.recalculate(); // Must be after features are added.
@@ -286,8 +239,6 @@ engine.on('RequestMapInitData', requestMapData);
 engine.on('GenerateMap', generateMap);
 console.log("Loaded Continents.ts");
 console.log("hey, continents is firing");
-
-
 function createLandmasses(iWidth, iHeight, continent1, continent2, iStartSectorRows, iStartSectorCols, startSectors) {
     FractalBuilder.create(globals.g_LandmassFractal, iWidth, iHeight, 2, 0);
     let iWaterHeight = FractalBuilder.getHeightFromPercent(globals.g_LandmassFractal, globals.g_WaterPercent);

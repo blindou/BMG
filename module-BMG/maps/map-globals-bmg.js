@@ -37,7 +37,7 @@ export var g_PolarWaterRows = 2;
 export var g_OceanWaterColumns = 4;
 // Tuning Parameters to adjust shape
 export var g_FractalWeight = 0.6;
-export var g_WaterPercent = 17;
+export var g_WaterPercent = 12;
 export var g_IgnoreStartSectorPctFromCtr = 80;
 export var g_StartSectorWeight = 0.5;
 export var g_CenterWeight = 0.7;
@@ -51,8 +51,8 @@ export var g_MountainTopIncrease = 100;
 export var g_RainShadowDrop = -80;
 export var g_RainShadowIncreasePerHex = 10;
 // Start position data
-export var g_RequiredBufferBetweenMajorStarts = 9;
-export var g_DesiredBufferBetweenMajorStarts = 11;
+export var g_RequiredBufferBetweenMajorStarts = 10;
+export var g_DesiredBufferBetweenMajorStarts = 12;
 export var g_RequiredDistanceFromMajorForDiscoveries = 3;
 
 //# sourceMappingURL=file:///base-standard/maps/map-globals.js.map

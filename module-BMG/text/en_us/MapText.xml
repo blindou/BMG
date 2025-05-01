@@ -25,5 +25,11 @@
         <Row Tag="LOC_MAP_CONTINENTS_BMG_DESCRIPTION">
             <Text>Continents style map for Balanced Map Generation</Text>
         </Row>
+        <Row Tag="LOC_MAP_FULL_GENERATION_BMG_NAME">
+            <Text>Full Generation BMG</Text>
+        </Row>
+        <Row Tag="LOC_MAP_FULL_GENERATION_BMG_DESCRIPTION">
+            <Text>Full map generation for Balanced Map Generation</Text>
+        </Row>
     </EnglishText>
 </Database>

@@ -6,8 +6,8 @@
         <Replace Type="MAPSIZE_STANDARD_FOUR_BMG" Kind="KIND_MAPSIZE"/>
     </Types>
     <Maps>
-        <Replace MapSizeType="MAPSIZE_STANDARD_SIX_BMG" Name="LOC_MAPSIZE_STANDARD_SIX_BMG_NAME" Description="LOC_MAPSIZE_STANDARD_SIX_BMG_DESCRIPTION" DefaultPlayers="6" PlayersLandmass1="6" PlayersLandmass2="0" GridWidth="70" GridHeight="52" NumNaturalWonders="5" OceanWidth="6" LakeSizeCutoff="12" LakeGenerationFrequency="24" Continents="4" StartSectorRows="5" StartSectorCols="5"/>
-        <Replace MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG" Name="LOC_MAPSIZE_STANDARD_EIGHT_BMG_NAME" Description="LOC_MAPSIZE_STANDARD_EIGHT_BMG_DESCRIPTION" DefaultPlayers="8" PlayersLandmass1="8" PlayersLandmass2="0" GridWidth="78" GridHeight="56" NumNaturalWonders="6" OceanWidth="6" LakeSizeCutoff="14" LakeGenerationFrequency="24" Continents="4" StartSectorRows="5" StartSectorCols="5"/>
+        <Replace MapSizeType="MAPSIZE_STANDARD_SIX_BMG" Name="LOC_MAPSIZE_STANDARD_SIX_BMG_NAME" Description="LOC_MAPSIZE_STANDARD_SIX_BMG_DESCRIPTION" DefaultPlayers="6" PlayersLandmass1="6" PlayersLandmass2="0" GridWidth="70" GridHeight="55" NumNaturalWonders="5" OceanWidth="6" LakeSizeCutoff="12" LakeGenerationFrequency="24" Continents="4" StartSectorRows="5" StartSectorCols="5"/>
+        <Replace MapSizeType="MAPSIZE_STANDARD_EIGHT_BMG" Name="LOC_MAPSIZE_STANDARD_EIGHT_BMG_NAME" Description="LOC_MAPSIZE_STANDARD_EIGHT_BMG_DESCRIPTION" DefaultPlayers="8" PlayersLandmass1="8" PlayersLandmass2="0" GridWidth="78" GridHeight="63" NumNaturalWonders="6" OceanWidth="6" LakeSizeCutoff="14" LakeGenerationFrequency="24" Continents="4" StartSectorRows="5" StartSectorCols="5"/>
         <Replace MapSizeType="MAPSIZE_STANDARD_FOUR_BMG" Name="LOC_MAPSIZE_STANDARD_FOUR_BMG_NAME" Description="LOC_MAPSIZE_STANDARD_FOUR_BMG_DESCRIPTION" DefaultPlayers="4" PlayersLandmass1="4" PlayersLandmass2="0" GridWidth="54" GridHeight="47" NumNaturalWonders="4" OceanWidth="6" LakeSizeCutoff="10" LakeGenerationFrequency="24" Continents="4" StartSectorRows="5" StartSectorCols="5"/>
     </Maps>
     <AgeProgressionEvents>

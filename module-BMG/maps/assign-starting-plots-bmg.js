@@ -1,9 +1,8 @@
 import { getSectorRegion, shuffle, isOceanAccess } from '/base-standard/maps/map-utilities.js';
-import * as globals from '/bmg-mode/maps/map-globals-bmg.js';
+import * as globals from '/base-standard/maps/map-globals.js';
 export function chooseStartSectors(iNumPlayersLandmass1, iNumPlayersLandmass2, iRows, iCols, bHumanNearEquator) {
     let returnValue = [];
     let iSectorsPerContinent = iRows * iCols;
-    console.log('Nbr sector per cont ->' + iSectorsPerContinent);
     let iPlayersWestContinent = iNumPlayersLandmass1;
     let iPlayersEastContinent = iNumPlayersLandmass2;
     if (iNumPlayersLandmass1 == 1 && iNumPlayersLandmass2 == 3) {
@@ -26,12 +25,10 @@ export function chooseStartSectors(iNumPlayersLandmass1, iNumPlayersLandmass2, i
         var validConfigs1 = [[0, 8], [2, 6]];
         var validConfigs2 = [[0, 2, 6, 8], [1, 3, 5, 7]];
     }
-    /*
     else if (iNumPlayersLandmass1 == 6 && iNumPlayersLandmass2 == 0) {
         var validConfigs1 = [[0, 2, 3, 5, 6, 8]];
         var validConfigs2 = [[]];
     }
-    */
     else if (iNumPlayersLandmass1 == 5 && iNumPlayersLandmass2 == 3) {
         var validConfigs1 = [[0, 2, 6, 8, 10], [1, 3, 5, 9, 11]];
         var validConfigs2 = [[3, 5, 7], [4, 6, 8]];
@@ -60,18 +57,14 @@ export function chooseStartSectors(iNumPlayersLandmass1, iNumPlayersLandmass2, i
         var validConfigs1 = [[0, 2, 4, 6, 8, 10], [1, 3, 5, 7, 9, 11]];
         var validConfigs2 = [[0, 2, 4, 6, 8, 10], [1, 3, 5, 7, 9, 11]];
     }
-    /*
     else if (iNumPlayersLandmass1 == 8 && iNumPlayersLandmass2 == 0) {
         var validConfigs1 = [[0, 2, 3, 5, 6, 8, 9, 11]];
         var validConfigs2 = [[]];
     }
-    */
     else if (iNumPlayersLandmass1 == 5 && iNumPlayersLandmass2 == 0) {
         var validConfigs1 = [[0, 2, 3, 5, 6]];
         var validConfigs2 = [[]];
     }
-
-//added configurations (MJP)
     else if (iNumPlayersLandmass1 == 8 && iNumPlayersLandmass2 == 0) {
         //var validConfigs1 = [[0, 2, 3, 5, 6, 8, 9, 11]];
         var validConfigs1 = [[1,3,7,10,14,17,21,23]];
@@ -83,9 +76,6 @@ export function chooseStartSectors(iNumPlayersLandmass1, iNumPlayersLandmass2, i
         var validConfigs1 = [[1,3,5,6,8,10]];
         var validConfigs2 = [[]];
     }
-//end additions
-
-
     else {
         console.log("THIS SHOULD NOT BE HIT IN STARTING POSITION");
         var validConfigs1 = [[0], [1], [2], [3], [4], [5]];
@@ -164,9 +154,16 @@ export function assignStartPositions(iNumWest, iNumEast, west, east, iStartSecto
     let homelandStartRegions = [];
     let distantStartRegions = [];
     //===========================================================================
-    // Forcer la méthode fertility-based (désactiver sector-based)
-    let bAssignStartPositionsBySector = false;
-    //===========================================================================
+    // Setting to determine which start position algorithm to use
+    //     Is TRUE if using the Civ VII sector-based approach
+    //	   Is FALSE if using the Civ VI method (areas of equal fertility)
+    let bAssignStartPositionsBySector = true;
+    if (iStartSectorRows == 0 || iStartSectorCols == 0) {
+        bAssignStartPositionsBySector = false;
+    }
+    else {
+        bAssignStartPositionsBySector = checkStartSectorsViable(west, east, iStartSectorRows, iStartSectorCols, sectors);
+    }
     //
     // NEW CIV VII METHOD
     //
@@ -294,86 +291,7 @@ export function assignStartPositions(iNumWest, iNumEast, west, east, iStartSecto
     console.log("homelandStartRegions: " + homelandStartRegions.length);
     console.log("distantPlayers: " + distantPlayers.length);
     console.log("distantStartRegions: " + distantStartRegions.length);
-    // --- Bias 100% déterministe en fonction des tables StartBias ---
-    function getStaticBias(playerId) {
-        const player = Players.get(playerId);
-        const civHash = player.civilizationType;
-        const ldrHash = player.leaderType;
-        let total = 0;
-        // Biomes
-        GameInfo.StartBiasBiomes.forEach(def => {
-            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
-            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
-            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
-                total += def.Score;
-            }
-        });
-        // Terrains
-        GameInfo.StartBiasTerrains.forEach(def => {
-            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
-            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
-            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
-                total += def.Score;
-            }
-        });
-        // Rivers
-        GameInfo.StartBiasRivers.forEach(def => {
-            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
-            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
-            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
-                total += def.Score;
-            }
-        });
-        // Coasts
-        GameInfo.StartBiasAdjacentToCoasts.forEach(def => {
-            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
-            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
-            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
-                total += def.Score;
-            }
-        });
-        // Features
-        GameInfo.StartBiasFeatureClasses.forEach(def => {
-            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
-            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
-            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
-                total += def.Score;
-            }
-        });
-        // Resources
-        GameInfo.StartBiasResources.forEach(def => {
-            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
-            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
-            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
-                total += def.Score;
-            }
-        });
-        // Lakes
-        GameInfo.StartBiasLakes.forEach(def => {
-            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
-            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
-            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
-                total += def.Score;
-            }
-        });
-        // Natural Wonders
-        GameInfo.StartBiasNaturalWonders.forEach(def => {
-            const civDef = GameInfo.Civilizations.lookup(def.CivilizationType);
-            const ldrDef = GameInfo.Leaders.lookup(def.LeaderType);
-            if ((civDef && civDef.$hash === civHash) || (ldrDef && ldrDef.$hash === ldrHash)) {
-                total += def.Score;
-            }
-        });
-        return total;
-    }
-
-    // Tri statique des joueurs homeland
-    homelandPlayers.sort((a,b) => getStaticBias(aliveMajorIds[b]) - getStaticBias(aliveMajorIds[a]));
-    console.log("HomelandPlayers triés statiquement par bias:", homelandPlayers.map(i=>Players.get(aliveMajorIds[i]).leaderName + ':' + getStaticBias(aliveMajorIds[i]).toFixed(1)));
-
-    // Tri statique des joueurs distant
-    distantPlayers.sort((a,b) => getStaticBias(aliveMajorIds[b]) - getStaticBias(aliveMajorIds[a]));
-    console.log("DistantPlayers triés statiquement par bias:", distantPlayers.map(i=>Players.get(aliveMajorIds[i]).leaderName + ':' + getStaticBias(aliveMajorIds[i]).toFixed(1)));
+    // Slide players around based on Start Biases
     console.log("Update homelandPlayers:");
     updateRegionsForStartBias(homelandPlayers, homelandStartRegions);
     console.log("Update distantPlayers:");
@@ -458,7 +376,7 @@ function updateRegionsForStartBias(majorGroup, startRegions) {
         if (player == null) {
             continue;
         }
-        //  Find their total bias (Leader + Civ) for each Biome and for Navigable Rivers
+        // 	Find their total bias (Leader + Civ) for each Biome and for Navigable Rivers
         let uiCivType = player.civilizationType;
         let uiLeaderType = player.leaderType;
         console.log("Player Id:" + playerId + ", " + player.civilizationName + ", " + player.leaderName);
@@ -563,10 +481,10 @@ function updateRegionsForStartBias(majorGroup, startRegions) {
         let region = startRegions[iRegion];
         for (let iX = region.west; iX <= region.east; iX++) {
             for (let iY = region.south; iY <= region.north; iY++) {
-                //  Number of tiles of each Biome
+                // 	Number of tiles of each Biome
                 let biomeType = GameplayMap.getBiomeType(iX, iY);
                 biomeCounts[iRegion][biomeType]++;
-                //  Number of Navigable River tiles
+                // 	Number of Navigable River tiles
                 if (GameplayMap.isNavigableRiver(iX, iY)) {
                     navRiverCounts[iRegion]++;
                 }
@@ -608,7 +526,7 @@ function updateRegionsForStartBias(majorGroup, startRegions) {
     // Assign final start sector in sorted order from highest grand total to lowest
     for (let iMajorGroup = 0; iMajorGroup < majorGroup.length; iMajorGroup++) {
         let iMajorToPlace = sortedMajorIndices[iMajorGroup];
-        //  Find best score for this player's biases
+        // 	Find best score for this player's biases
         let iBestScore = -1;
         let iBestRegion = -1;
         for (let iRegion = 0; iRegion < startRegions.length; iRegion++) {
@@ -640,29 +558,6 @@ function pickStartPlot(region, numFoundEarlier, playerId, ignoreBias, startPosit
     let highestScore = 0;
     for (let iY = region.south; iY <= region.north; iY++) {
         for (let iX = region.west; iX <= region.east; iX++) {
-            // Ignorer case si plus de 2 voisins en eau ou un voisin montagne
-            const adj = GameplayMap.getPlotIndicesInRadius(iX, iY, 1);
-            let waterCount = 0, hasMountain = false;
-            adj.forEach(idx => {
-                const { x, y } = GameplayMap.getLocationFromIndex(idx);
-                if (GameplayMap.isWater(x, y)) waterCount++;
-                if (GameplayMap.isMountain(x, y)) hasMountain = true;
-            });
-            if (waterCount > 2 || hasMountain) continue;
-
-            // 2ème couronne (distance=2) : compte eaux et montagnes
-            const adj2 = GameplayMap.getPlotIndicesInRadius(iX, iY, 2).filter(idx => {
-                const loc = GameplayMap.getLocationFromIndex(idx);
-                return GameplayMap.getPlotDistance(iX, iY, loc.x, loc.y) === 2;
-            });
-            let waterCount2 = 0, mountainCount2 = 0;
-            adj2.forEach(idx => {
-                const { x, y } = GameplayMap.getLocationFromIndex(idx);
-                if (GameplayMap.isWater(x, y)) waterCount2++;
-                if (GameplayMap.isMountain(x, y)) mountainCount2++;
-            });
-            if (waterCount2 > 3 || mountainCount2 > 2) continue;
-
             let score = scorePlot(iX, iY, region.continent);
             if (score > 0 && !ignoreBias) {
                 score += adjustScoreByStartBias(iX, iY, playerId);
@@ -676,12 +571,9 @@ function pickStartPlot(region, numFoundEarlier, playerId, ignoreBias, startPosit
             }
         }
     }
-    console.log("Final score high =" + highestScore + " for player - " + playerId);
     return chosenPlotIndex;
 }
 function scorePlot(iX, iY, iContinent) {
-    console.log("Plot", iX, iY, "continentType=", GameplayMap.getContinentType(iX, iY),
-        "expected=", iContinent);
     let score = -1;
     if (!GameplayMap.isWater(iX, iY) && !GameplayMap.isMountain(iX, iY)) {
         if (iContinent == -1 || GameplayMap.getContinentType(iX, iY) == iContinent) {
@@ -1005,4 +897,4 @@ function getNaturalWonderStartBiasScore(score, iX, iY) {
     return outputScore;
 }
 
-//# sourceMappingURL=file:///base-standard/maps/assign-starting-plots.js.map
+//# sourceMappingURL=file:///base-standard/maps/assign-starting-plots-bmg.js.map
