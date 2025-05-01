@@ -1,5 +1,5 @@
 import { getSectorRegion, shuffle, isOceanAccess } from '/base-standard/maps/map-utilities.js';
-import * as globals from '/base-standard/maps/map-globals.js';
+import * as globals from '/bmg-mode/maps/map-globals-bmg.js';
 export function chooseStartSectors(iNumPlayersLandmass1, iNumPlayersLandmass2, iRows, iCols, bHumanNearEquator) {
     let returnValue = [];
     let iSectorsPerContinent = iRows * iCols;
@@ -558,6 +558,15 @@ function pickStartPlot(region, numFoundEarlier, playerId, ignoreBias, startPosit
     let highestScore = 0;
     for (let iY = region.south; iY <= region.north; iY++) {
         for (let iX = region.west; iX <= region.east; iX++) {
+            // Ignorer case si plus de 2 voisins en eau ou un voisin montagne
+            const adj = GameplayMap.getPlotIndicesInRadius(iX, iY, 1);
+            let waterCount = 0, hasMountain = false;
+            adj.forEach(idx => {
+                const { x, y } = GameplayMap.getLocationFromIndex(idx);
+                if (GameplayMap.isWater(x, y)) waterCount++;
+                if (GameplayMap.isMountain(x, y)) hasMountain = true;
+            });
+            if (waterCount > 2 || hasMountain) continue;
             let score = scorePlot(iX, iY, region.continent);
             if (score > 0 && !ignoreBias) {
                 score += adjustScoreByStartBias(iX, iY, playerId);
