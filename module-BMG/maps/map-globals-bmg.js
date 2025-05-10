@@ -37,7 +37,7 @@ export var g_PolarWaterRows = 2;
 export var g_OceanWaterColumns = 4;
 // Tuning Parameters to adjust shape
 export var g_FractalWeight = 0.6;
-export var g_WaterPercent = 12;
+export var g_WaterPercent = 10;
 export var g_IgnoreStartSectorPctFromCtr = 80;
 export var g_StartSectorWeight = 0.5;
 export var g_CenterWeight = 0.7;

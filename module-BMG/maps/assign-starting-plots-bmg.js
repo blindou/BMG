@@ -26,7 +26,7 @@ export function chooseStartSectors(iNumPlayersLandmass1, iNumPlayersLandmass2, i
         var validConfigs2 = [[0, 2, 6, 8], [1, 3, 5, 7]];
     }
     else if (iNumPlayersLandmass1 == 6 && iNumPlayersLandmass2 == 0) {
-        var validConfigs1 = [[0, 2, 3, 5, 6, 8]];
+        var validConfigs1 = [[1,3,7,9,13,15]];
         var validConfigs2 = [[]];
     }
     else if (iNumPlayersLandmass1 == 5 && iNumPlayersLandmass2 == 3) {
@@ -58,22 +58,7 @@ export function chooseStartSectors(iNumPlayersLandmass1, iNumPlayersLandmass2, i
         var validConfigs2 = [[0, 2, 4, 6, 8, 10], [1, 3, 5, 7, 9, 11]];
     }
     else if (iNumPlayersLandmass1 == 8 && iNumPlayersLandmass2 == 0) {
-        var validConfigs1 = [[0, 2, 3, 5, 6, 8, 9, 11]];
-        var validConfigs2 = [[]];
-    }
-    else if (iNumPlayersLandmass1 == 5 && iNumPlayersLandmass2 == 0) {
-        var validConfigs1 = [[0, 2, 3, 5, 6]];
-        var validConfigs2 = [[]];
-    }
-    else if (iNumPlayersLandmass1 == 8 && iNumPlayersLandmass2 == 0) {
-        //var validConfigs1 = [[0, 2, 3, 5, 6, 8, 9, 11]];
-        var validConfigs1 = [[1,3,7,10,14,17,21,23]];
-        var validConfigs2 = [[]];
-    }
-
-    else if (iNumPlayersLandmass1 == 6 && iNumPlayersLandmass2 == 0) {
-        //var validConfigs1 = [[0, 2, 3, 5, 6, 8, 9, 11]];
-        var validConfigs1 = [[1,3,5,6,8,10]];
+        var validConfigs1 = [[1,3,7,9,13,15,19,21]];
         var validConfigs2 = [[]];
     }
     else {

@@ -188,39 +188,40 @@ function generateMap() {
         }
 
         // 2) Vérifier proportion de collines et forêts dans le rayon 3
-        const hillTerrain = globals.g_HillTerrain;
-        const forestFeature = GameInfo.Features.find(f => f.FeatureType === "FEATURE_FOREST").$index; // index de la forêt
-        let goodCount = 0;
-        const plots3 = GameplayMap.getPlotIndicesInRadius(x0, y0, 3).filter(idx => idx !== plotIndex);
-        plots3.forEach(idx => {
-            const {x, y} = GameplayMap.getLocationFromIndex(idx);
-            if (GameplayMap.getTerrainType(x, y) === hillTerrain ||
-                GameplayMap.getFeatureType(x, y) === forestFeature) {
-                goodCount++;
-            }
-        });
-        const needRatio = 0.15;  // 30%
-        if (goodCount / plots3.length < needRatio) {
-            const toAdd = Math.ceil(needRatio * plots3.length) - goodCount;
-            let added = 0;
-            for (let idx of utilities.shuffle(plots3)) {
-                if (added >= toAdd) break;
-                const {x, y} = GameplayMap.getLocationFromIndex(idx);
-                // Vérifier que la case n'a pas déjà une forêt ou une colline
-                if (GameplayMap.getTerrainType(x, y) === globals.g_FlatTerrain &&
-                    GameplayMap.getFeatureType(x, y) !== forestFeature) {
-                    // 50% de chance d'ajouter une forêt ou une colline
-                    if (Math.random() < 0.5) {
-                        TerrainBuilder.setTerrainType(x, y, hillTerrain);
-                    } else {
-                        TerrainBuilder.setFeatureType(x, y, forestFeature);
-                    }
-                    added++;
-                }
-            }
-            console.log(`⛰️🌲 Ajout de ${added} collines/forêts autour de (${x0},${y0})`);
-        }
+        // const hillTerrain = globals.g_HillTerrain;
+        // const forestFeature = GameInfo.Features.find(f => f.FeatureType === "FEATURE_FOREST").$index; // index de la forêt
+        // let goodCount = 0;
+        // const plots3 = GameplayMap.getPlotIndicesInRadius(x0, y0, 3).filter(idx => idx !== plotIndex);
+        // plots3.forEach(idx => {
+        //     const {x, y} = GameplayMap.getLocationFromIndex(idx);
+        //     if (GameplayMap.getTerrainType(x, y) === hillTerrain ||
+        //         GameplayMap.getFeatureType(x, y) === forestFeature) {
+        //         goodCount++;
+        //     }
+        // });
+        // const needRatio = 0.12;  // 12%
+        // if (goodCount / plots3.length < needRatio) {
+        //     const toAdd = Math.ceil(needRatio * plots3.length) - goodCount;
+        //     let added = 0;
+        //     for (let idx of utilities.shuffle(plots3)) {
+        //         if (added >= toAdd) break;
+        //         const {x, y} = GameplayMap.getLocationFromIndex(idx);
+        //         // Vérifier que la case n'a pas déjà une forêt ou une colline
+        //         if (GameplayMap.getTerrainType(x, y) === globals.g_FlatTerrain &&
+        //             GameplayMap.getFeatureType(x, y) !== forestFeature) {
+        //             // 50% de chance d'ajouter une forêt ou une colline
+        //             if (Math.random() < 0.5) {
+        //                 TerrainBuilder.setTerrainType(x, y, hillTerrain);
+        //             } else {
+        //                 TerrainBuilder.setFeatureType(x, y, forestFeature);
+        //             }
+        //             added++;
+        //         }
+        //     }
+        //     console.log(`⛰️🌲 Ajout de ${added} collines/forêts autour de (${x0},${y0})`);
+        // }
     });
+    TerrainBuilder.validateAndFixTerrain();
     generateDiscoveries(iWidth, iHeight, startPositions);
     dumpResources(iWidth, iHeight);
     FertilityBuilder.recalculate(); // Must be after features are added.
@@ -233,6 +234,46 @@ function generateMap() {
     };
     dumpNoisePredicate(iWidth, iHeight, poisson, poissonPred);
     assignAdvancedStartRegions();
+
+    // Evaluate spawns multi-criteria
+    const positions = startPositions.map(pi=>GameplayMap.getLocationFromIndex(pi));
+    const biasScores=[],resCounts=[],fertSums=[],minDists=[];
+    positions.forEach((loc,i)=>{
+        biasScores.push(StartPositioner.getStartPositionScore(loc.x,loc.y));
+        let rc=0,fs=0;
+        for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const x=loc.x+dx,y=loc.y+dy;if(x<0||y<0||x>=iWidth||y>=iHeight)continue; if(GameplayMap.getResourceType(x,y)>0&&GameInfo.Resources.lookup(GameplayMap.getResourceType(x,y)).ResourceClassType==='RESOURCECLASS_BONUS') rc++; // Fertility metric removed (getFertility not available)
+            fs += 0;}
+        resCounts.push(rc); fertSums.push(fs);
+        let md=Infinity; positions.forEach((o,j)=>{if(i!==j){const d=GameplayMap.getPlotDistance(loc.x,loc.y,o.x,o.y); if(d<md) md=d;}});
+        minDists.push(md);
+    });
+    const maxBias=Math.max(...biasScores), maxRes=Math.max(...resCounts), maxFert=Math.max(...fertSums), maxDist=Math.max(...minDists);
+    const w={bias:0.45,res:0.25,water:0.1,coast:0.1,fert:0,dist:0.1};
+    const totalScores=positions.map((loc,i)=>{
+        const hasFresh=GameplayMap.isRiver(loc.x,loc.y)||GameplayMap.isAdjacentToRivers(loc.x,loc.y,1);
+        const isCoast=GameplayMap.isCoastalLand(loc.x,loc.y);
+        const nB=maxBias?biasScores[i]/maxBias:0;
+        const nR=maxRes?resCounts[i]/maxRes:0;
+        const nF=maxFert?fertSums[i]/maxFert:0;
+        const nD=maxDist?minDists[i]/maxDist:0;
+        return w.bias*nB + w.res*nR + w.water*(hasFresh?1:0) + w.coast*(isCoast?1:0) + w.fert*nF + w.dist*nD;
+    });
+    console.log("Spawn Scores:",totalScores.map(s=>s.toFixed(2)));
+
+
+
+
+    const minTotal=Math.min(...totalScores);
+    if (minTotal < 0.45) {
+        console.log(`❌ Score minimum détecté : ${minTotal}, relance de la carte...`);
+        // engine.trigger("GenerateMap");
+        return;
+    }
+
+    // ───────────────────────────────────────────────────────
+
+
+
 }
 // Register listeners.
 engine.on('RequestMapInitData', requestMapData);
@@ -249,8 +290,8 @@ function createLandmasses(iWidth, iHeight, continent1, continent2, iStartSectorR
             let terrain = globals.g_FlatTerrain;
             let iRandom = TerrainBuilder.getRandomNumber(iBuffer, "Random Top/Bottom Edges");
             let iRandom2 = TerrainBuilder.getRandomNumber(iBuffer2, "Random Left/Right Edges");
-            //  Must be water if at the poles
-            if (iY < continent1.south + iRandom || iY >= continent1.north - iRandom) {
+            //  Must be water if at the poles - Augmenter la zone d'eau aux pôles
+            if (iY < continent1.south + iBuffer + 2 || iY >= continent1.north - iBuffer - 2) {
                 terrain = globals.g_OceanTerrain;
             }
             // Of if between the continents
